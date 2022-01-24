@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from .models import UrlMetaData
+from .models import UrlMetaData, MarkUnsafe
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, response
 from . import scraping
@@ -11,7 +11,7 @@ import csv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import re
-
+from django.db.models import F
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. You're at the detect index.")
@@ -21,10 +21,13 @@ def sitecheck(request):
     url = request.GET.get('url', None)
     scraping_results = scraping.scraper(url)
     string_list = []
+    print(scraping_results)
+    if scraping_results == None:
+        return JsonResponse({'error': True, 'status': True, 'code': 500})
     for vector in scraping_results:
         dic = {
             'code': vector
-        }   
+        }
         string_list.append(dic)
 
     filename = str(uuid.uuid1())+'.csv'
@@ -66,6 +69,7 @@ def sitecheck(request):
                 count_mal += 1
 
     res['lines'] = count_mal
+    print(count_mal)
                 
     
     # rjson = json.dumps(res)
@@ -94,3 +98,17 @@ class MetaData(APIView):
             return Response({'status': 'success'})
         return Response({'status': 'bad request'}, status=500)
 
+
+class MarkSafe(APIView):
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        print(self.request.POST)
+        if data and data['url'] and type(data['url']) == str:
+            unsafe = MarkUnsafe.objects.filter(url=data['url'])
+            if unsafe.exists():
+                unsafe.update(count=F('count') + 1)
+            else:
+                MarkUnsafe.objects.create(url=data['url'])
+            return Response({'status': 'success'})
+        return Response({'status': 'bad request'}, status=500)
