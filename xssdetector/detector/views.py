@@ -85,16 +85,12 @@ def sitecheck(request):
 
 
 class MetaData(APIView):
-
     def post(self, request, *args, **kwargs):
         data = request.data
-        list_data = []
         print(data)
-        if data and data['data'] and type(data['data']) == list:
-            for item in data['data']:
-                list_data.append(UrlMetaData(url=item['url'],other_details = item['details']))
-
-            UrlMetaData.objects.bulk_create(list_data)
+        print(self.request.POST)
+        if data and data['url'] and type(data['url']) == str:
+            UrlMetaData.objects.create(url=data['url'], other_details={})
             return Response({'status': 'success'})
         return Response({'status': 'bad request'}, status=500)
 
