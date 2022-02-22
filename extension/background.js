@@ -37,6 +37,8 @@ chrome.tabs.onUpdated.addListener(
                             var stt = result.status;
                             var count = result.lines
                             if(stt == false) {
+
+
                                 if (count <= 6)
                                      messagestring += "Site marked safe.";
                                 else if (count>6 && count<=10) {
